@@ -1,4 +1,4 @@
-import { CONFIG, REGIONS, ZONES, POPULAR, GALLERY } from './data.js';
+import { CONFIG, REGIONS, ZONES, POPULAR, GALLERY } from './data.js?v=4';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -171,7 +171,7 @@ const boot = new IntersectionObserver(async (entries) => {
     return;
   }
   try {
-    const { StudioViewer } = await import('./studio3d.js');
+    const { StudioViewer } = await import('./studio3d.js?v=4');
     const v = new StudioViewer(viewerEl, $('#hotspots'), { onZoneClick: (id) => selectZone(id) });
     await v.ready;
     viewer = v;
