@@ -82,37 +82,59 @@
     <header class="section-head reveal">
       <p class="eyebrow">Estúdio interativo</p>
       <h2>Escolha onde brilhar</h2>
-      <p class="section-lead">Gire o busto, toque em um ponto dourado e veja as opções de piercing para cada região. Experimente metais diferentes e monte o seu projeto para enviar direto pelo WhatsApp.</p>
+      <p class="section-lead">Gire o boneco 3D, toque em um ponto dourado e veja as opções de piercing para cada região. Experimente metais diferentes e monte o seu projeto para enviar direto pelo WhatsApp.</p>
     </header>
+
+    <div class="mode-switch" role="tablist" aria-label="Área do estúdio">
+      <button class="mode-btn is-on" data-mode="face" role="tab" aria-selected="true" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4 0-6.5 3-6.5 7 0 5 3 9 6.5 11 3.5-2 6.5-6 6.5-11 0-4-2.5-7-6.5-7z"/><path d="M9.5 15c1.5 1 3.5 1 5 0"/></svg>
+        Rosto & Orelhas
+      </button>
+      <button class="mode-btn" data-mode="intimo" role="tab" aria-selected="false" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Área Íntima <span class="badge18">+18</span>
+      </button>
+    </div>
 
     <div class="studio-grid">
       <div class="viewer-card">
-        <div class="viewer" id="viewer">
+        <div class="viewer" id="viewer" tabindex="0" aria-label="Boneco 3D: arraste ou use as setas do teclado para girar">
           <div class="hotspots" id="hotspots"></div>
           <div class="viewer-loading" id="viewer-loading"><span class="loader-moon"></span>Preparando o estúdio…</div>
           <div class="viewer-hint" id="viewer-hint">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-            Arraste para girar · role para aproximar · toque nos pontos
+            Arraste ou use as setas para girar · toque nos pontos dourados
           </div>
         </div>
         <div class="viewer-bar">
           <div class="metal-picker" role="radiogroup" aria-label="Metal da joia" id="metal-picker"></div>
-          <button class="btn btn-ghost btn-sm" id="reset-view" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Vista inicial
-          </button>
+          <div class="rotate-ctrl" role="group" aria-label="Girar o boneco">
+            <button class="rot-btn" id="rot-left" type="button" aria-label="Girar para a esquerda">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <button class="rot-btn rot-auto is-on" id="rot-auto" type="button" aria-pressed="true" title="Girar automaticamente">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4"/></svg>
+              <span>Girar</span>
+            </button>
+            <button class="rot-btn" id="rot-right" type="button" aria-label="Girar para a direita">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            <button class="rot-btn" id="reset-view" type="button" aria-label="Centralizar o boneco" title="Centralizar">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4M17 12h4M12 3v4M12 17v4"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
         </div>
       </div>
 
       <aside class="panel" aria-live="polite">
+        <p class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          Atendimento em sala reservada, com total discrição e somente para maiores de 18 anos.
+        </p>
         <div class="region-tabs" role="tablist" id="region-tabs"></div>
         <div class="zone-list" id="zone-list"></div>
-        <div class="zone-detail" id="zone-detail">
-          <div class="zone-empty">
-            <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="6" fill="none" stroke="currentColor"/><circle cx="24" cy="24" r="14" fill="none" stroke="currentColor" stroke-dasharray="2 4"/></svg>
-            <p>Selecione uma região no busto ou na lista acima para ver os piercings disponíveis.</p>
-          </div>
-        </div>
+        <div class="zone-detail" id="zone-detail"></div>
       </aside>
     </div>
 
@@ -269,6 +291,7 @@
       <details class="reveal"><summary>Menores de idade podem furar?</summary><p>Sim, com a presença do responsável legal e documentos com foto de ambos. Alguns piercings podem ter restrição de idade — consulte-nos.</p></details>
       <details class="reveal"><summary>Por que não usar pistola?</summary><p>A pistola não pode ser esterilizada adequadamente e causa trauma por pressão no tecido. A agulha é estéril, descartável e corta o tecido de forma limpa, favorecendo a cicatrização.</p></details>
       <details class="reveal"><summary>Quando posso trocar a joia?</summary><p>Somente após a cicatrização, que varia de semanas a meses conforme a região. O primeiro downsize (troca por uma haste menor) costuma ocorrer entre 4 e 8 semanas, no próprio estúdio.</p></details>
+      <details class="reveal"><summary>Como funcionam os piercings íntimos?</summary><p>São realizados somente em maiores de 18 anos, com documento, após uma avaliação anatômica individual — nem toda anatomia é compatível com todos os piercings, e isso é avaliado com respeito e sem constrangimento. O atendimento acontece em sala reservada, com total sigilo.</p></details>
       <details class="reveal"><summary>Posso fazer mais de um piercing no mesmo dia?</summary><p>Sim. Avaliamos juntos a quantidade ideal para que a cicatrização seja confortável. Use o estúdio 3D para montar seu projeto e nos envie.</p></details>
       <details class="reveal"><summary>Quais as formas de pagamento?</summary><p>Pix, cartões de débito e crédito. Consulte condições de parcelamento no agendamento.</p></details>
     </div>
@@ -317,12 +340,25 @@
     </a>
     <p class="footer-note">Body piercing com biossegurança e joias de grau implante.</p>
     <p class="footer-copy">© <span id="year"></span> Lorena Lua Piercings. Todos os direitos reservados.</p>
+    <p class="footer-credit">Modelo 3D da cabeça: “Lee Perry-Smith” por <a href="https://www.ir-ltd.net" target="_blank" rel="noopener">Infinite-Realities</a>, licença <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.</p>
   </div>
 </footer>
 
 <a class="float-whats" id="float-whats" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
   <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.9 1 1-3.8-.2-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.3 14.3 0 0 0 5.5 4.8c2 .9 2.8 1 3.9.8a3.3 3.3 0 0 0 2.1-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.4z"/></svg>
 </a>
+
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate-card">
+    <span class="badge18 lg">18+</span>
+    <h3 id="gate-title">Área íntima</h3>
+    <p>Esta área apresenta informações sobre piercings de mamilo e genitais, de forma profissional e ilustrativa. O conteúdo é destinado a maiores de 18 anos, e os procedimentos são realizados somente em maiores de idade, mediante documento com foto.</p>
+    <div class="gate-actions">
+      <button class="btn btn-gold" id="gate-yes" type="button">Tenho 18 anos ou mais</button>
+      <button class="btn btn-ghost" id="gate-no" type="button">Voltar</button>
+    </div>
+  </div>
+</div>
 
 <div class="lightbox" id="lightbox" hidden>
   <button class="lightbox-close" type="button" aria-label="Fechar">×</button>

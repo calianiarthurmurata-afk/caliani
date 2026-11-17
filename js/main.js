@@ -75,45 +75,129 @@ $('#contact-form').addEventListener('submit', (e) => {
 });
 
 /* ------------------------------ estúdio 3D ------------------------------ */
+const REGION = new Map(REGIONS.map((r) => [r.id, r]));
+const zoneMode = (z) => REGION.get(z.region).mode;
+const zoneGender = (z) => REGION.get(z.region).gender || null;
 const state = {
+  mode: 'face',
+  gender: 'fem',
   region: 'orelha',
   zone: null,
   preview: null,
   project: new Set(),
   metal: METALS[0],
+  adult: false,
 };
+try { state.adult = sessionStorage.getItem('ll-adult') === '1'; } catch { /* sem storage */ }
 let viewer = null;
 
-const regionTabs = $('#region-tabs');
 const ICONS = {
   ear: '<path d="M15 20c3 0 3-4 5-6 3-3 2-11-5-11S8 8 8 10" /><path d="M11 11a3 3 0 0 1 6 0c0 2-2 2-2 4"/>',
   nose: '<path d="M12 3c0 6-4 9-4 13a2 2 0 0 0 3 2l1-1 1 1a2 2 0 0 0 3-2c0-4-4-7-4-13"/>',
   lips: '<path d="M3 12c3-4 6-5 9-3 3-2 6-1 9 3-3 4-6 6-9 6s-6-2-9-6z"/><path d="M3 12h18"/>',
   brow: '<path d="M3 10c4-4 12-4 18 0"/><path d="M5 15c3 3 11 3 14 0-3-3-11-3-14 0z"/>',
+  chest: '<path d="M4 5c1 4 0 8 2 12M20 5c-1 4 0 8-2 12"/><circle cx="8.5" cy="12" r="1.2"/><circle cx="15.5" cy="12" r="1.2"/>',
+  fem: '<circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/>',
+  masc: '<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>',
 };
-for (const r of REGIONS) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'region-tab';
-  b.dataset.region = r.id;
-  b.setAttribute('role', 'tab');
-  b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[r.icon]}</svg><span>${r.name}</span>`;
-  b.addEventListener('click', () => setRegion(r.id, true));
-  regionTabs.appendChild(b);
+
+const visibleZones = () => ZONES.filter((z) => zoneMode(z) === state.mode && (!zoneGender(z) || zoneGender(z) === state.gender));
+
+function renderRegionTabs() {
+  const tabs = $('#region-tabs');
+  tabs.innerHTML = '';
+  const regs = REGIONS.filter((r) => r.mode === state.mode);
+  tabs.style.setProperty('--n', regs.length);
+  for (const r of regs) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'region-tab' + (r.id === state.region ? ' is-on' : '');
+    b.dataset.region = r.id;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(r.id === state.region));
+    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[r.icon]}</svg><span>${r.name}</span>`;
+    b.addEventListener('click', () => setRegion(r.id, true));
+    tabs.appendChild(b);
+  }
+}
+
+function syncViewer() {
+  if (!viewer) return;
+  viewer.setGender(state.gender);
+  viewer.setZones(visibleZones());
+  viewer.setActiveZone(state.zone);
+  updateJewelry();
 }
 
 function setRegion(id, focusFirst = false) {
+  const r = REGION.get(id);
   state.region = id;
-  $$('.region-tab').forEach((b) => {
-    const on = b.dataset.region === id;
-    b.classList.toggle('is-on', on);
-    b.setAttribute('aria-selected', String(on));
-  });
+  if (r.gender && r.gender !== state.gender) {
+    state.gender = r.gender;
+    syncViewer();
+  }
+  renderRegionTabs();
   renderZoneList();
   if (focusFirst) {
     const first = ZONES.find((z) => z.region === id);
     if (first) selectZone(first.id);
   }
+}
+
+/* troca entre rosto e área íntima (+18) */
+const gate = $('#gate');
+function setMode(mode, after) {
+  if (mode === 'intimo' && !state.adult) {
+    gate.hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('#gate-yes').focus();
+    gate._after = after;
+    return;
+  }
+  if (mode === state.mode) { after && after(); return; }
+  state.mode = mode;
+  state.zone = null;
+  state.preview = null;
+  state.region = REGIONS.find((r) => r.mode === mode && (!r.gender || r.gender === state.gender)).id;
+  $$('.mode-btn').forEach((b) => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  $('#estudio').classList.toggle('is-intimo', mode === 'intimo');
+  renderRegionTabs();
+  renderZoneList();
+  renderEmpty();
+  if (viewer) {
+    viewer.setMode(mode);
+    syncViewer();
+  }
+  after && after();
+}
+$$('.mode-btn').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+$('#gate-yes').addEventListener('click', () => {
+  state.adult = true;
+  try { sessionStorage.setItem('ll-adult', '1'); } catch { /* sem storage */ }
+  gate.hidden = true;
+  document.body.style.overflow = '';
+  const after = gate._after;
+  gate._after = null;
+  setMode('intimo', after);
+});
+$('#gate-no').addEventListener('click', () => {
+  gate.hidden = true;
+  document.body.style.overflow = '';
+  gate._after = null;
+});
+
+function renderEmpty() {
+  $('#zone-detail').innerHTML = `
+    <div class="zone-empty">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="6" fill="none" stroke="currentColor"/><circle cx="24" cy="24" r="14" fill="none" stroke="currentColor" stroke-dasharray="2 4"/></svg>
+      <p>${state.mode === 'intimo'
+        ? 'Gire o manequim e toque em um ponto, ou escolha uma região acima. Todas as informações são confidenciais e o atendimento é reservado.'
+        : 'Gire o boneco e toque em um ponto dourado, ou escolha uma região acima para ver os piercings disponíveis.'}</p>
+    </div>`;
 }
 
 function renderZoneList() {
@@ -137,22 +221,33 @@ function pain(n) {
 function selectZone(id) {
   const z = ZONES.find((z) => z.id === id);
   if (!z) return;
-  if (z.region !== state.region) setRegion(z.region);
-  state.zone = id;
-  renderZoneList();
-  viewer && viewer.setActiveZone(id);
-  viewer && viewer.focusZone(z);
-  $('#viewer-hint').classList.add('is-gone');
-  const inProject = z.piercings.find((p) => state.project.has(p.id));
-  state.preview = (inProject || z.piercings[0]).id;
-  renderDetail();
-  updateJewelry();
+  const go = () => {
+    const g = zoneGender(z);
+    if (g && g !== state.gender) { state.gender = g; syncViewer(); }
+    state.region = z.region;
+    state.zone = id;
+    renderRegionTabs();
+    renderZoneList();
+    if (viewer) { viewer.setActiveZone(id); viewer.focusZone(z); }
+    $('#viewer-hint').classList.add('is-gone');
+    const inProject = z.piercings.find((p) => state.project.has(p.id));
+    state.preview = (inProject || z.piercings[0]).id;
+    renderDetail();
+    updateJewelry();
+  };
+  if (zoneMode(z) !== state.mode) setMode(zoneMode(z), go);
+  else go();
 }
+
+const waMsg = (p) => zoneMode(p.zone) === 'intimo'
+  ? `Olá, Lorena! Gostaria de informações sobre o piercing ${p.name}. Pode me passar os horários disponíveis para avaliação?`
+  : `Olá, Lorena! Tenho interesse no piercing ${p.name} (${p.zone.name}). Pode me passar os horários disponíveis?`;
 
 function renderDetail() {
   const z = ZONES.find((z) => z.id === state.zone);
   const box = $('#zone-detail');
   if (!z) return;
+  const intimo = zoneMode(z) === 'intimo';
   box.innerHTML = `
     <div class="zone-head">
       <h3>${z.name}</h3>
@@ -163,7 +258,7 @@ function renderDetail() {
         const on = state.project.has(p.id);
         const prev = state.preview === p.id;
         return `
-        <article class="p-card${prev ? ' is-preview' : ''}${on ? ' is-added' : ''}" data-id="${p.id}" tabindex="0" aria-label="Visualizar ${p.name}">
+        <article class="p-card${prev ? ' is-preview' : ''}${on ? ' is-added' : ''}" data-id="${p.id}" tabindex="0" aria-label="Ver detalhes de ${p.name}">
           <div class="p-top">
             <h4>${p.name}</h4>
             <span class="p-price">a partir de <b>${brl(p.price)}</b></span>
@@ -174,9 +269,10 @@ function renderDetail() {
             <div><dt>Desconforto</dt><dd>${pain(p.pain)}</dd></div>
             <div class="wide"><dt>Joia indicada</dt><dd>${p.jewelry}</dd></div>
           </dl>
+          ${intimo && !p.render.length ? '<p class="p-note">Somente mediante avaliação anatômica presencial, em sala reservada.</p>' : ''}
           <div class="p-actions">
             <button type="button" class="btn btn-sm ${on ? 'btn-ghost' : 'btn-gold'} js-add" aria-pressed="${on}">${on ? '✓ No projeto' : '+ Adicionar ao projeto'}</button>
-            <a class="link-sm" target="_blank" rel="noopener" href="${waLink(`Olá, Lorena! Tenho interesse no piercing ${p.name} (${z.name}). Pode me passar os horários disponíveis?`)}">Agendar este</a>
+            <a class="link-sm" target="_blank" rel="noopener" href="${waLink(waMsg({ ...p, zone: z }))}">Agendar este</a>
           </div>
         </article>`;
       }).join('')}
@@ -227,12 +323,13 @@ $('#project-clear').addEventListener('click', () => {
 
 function updateJewelry() {
   if (!viewer) return;
+  const visible = new Set(visibleZones().map((z) => z.id));
   const ids = new Set(state.project);
   if (state.preview) ids.add(state.preview);
-  viewer.showJewelry([...ids].flatMap((id) => byId.get(id).render));
+  viewer.showJewelry([...ids].map((id) => byId.get(id)).filter((p) => visible.has(p.zone.id)).flatMap((p) => p.render));
 }
 
-/* metal picker */
+/* seletor de metal */
 const mp = $('#metal-picker');
 for (const m of METALS) {
   const b = document.createElement('button');
@@ -240,7 +337,9 @@ for (const m of METALS) {
   b.className = 'metal' + (m === state.metal ? ' is-on' : '');
   b.setAttribute('role', 'radio');
   b.setAttribute('aria-checked', String(m === state.metal));
-  b.innerHTML = `<span style="--c:${m.hex}"></span>${m.name}`;
+  b.title = m.name;
+  b.setAttribute('aria-label', m.name);
+  b.innerHTML = `<span style="--c:${m.hex}"></span>${m.short || m.name}`;
   b.addEventListener('click', () => {
     state.metal = m;
     $$('.metal', mp).forEach((x) => { const on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-checked', String(on)); });
@@ -250,9 +349,22 @@ for (const m of METALS) {
   mp.appendChild(b);
 }
 
+/* controles de giro */
+const autoBtn = $('#rot-auto');
+const setAutoUI = (on) => { autoBtn.setAttribute('aria-pressed', String(on)); autoBtn.classList.toggle('is-on', on); };
+$('#rot-left').addEventListener('click', () => viewer && viewer.rotateBy(-45));
+$('#rot-right').addEventListener('click', () => viewer && viewer.rotateBy(45));
+autoBtn.addEventListener('click', () => viewer && viewer.setAutoRotate(!viewer.controls.autoRotate));
 $('#reset-view').addEventListener('click', () => viewer && viewer.resetView());
+$('#viewer').addEventListener('keydown', (e) => {
+  if (!viewer) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); viewer.rotateBy(-30); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); viewer.rotateBy(30); }
+});
 
-setRegion(state.region);
+renderRegionTabs();
+renderZoneList();
+renderEmpty();
 
 /* inicia o 3D somente quando a seção se aproxima da tela */
 function supportsWebGL() {
@@ -270,11 +382,16 @@ const boot = new IntersectionObserver(async (entries) => {
     return;
   }
   try {
-    const { HeadViewer } = await import('./head3d.js');
-    viewer = new HeadViewer(viewerEl, $('#hotspots'), { onZoneClick: selectZone });
-    viewer.setZones(ZONES);
+    const { StudioViewer } = await import('./studio3d.js');
+    const v = new StudioViewer(viewerEl, $('#hotspots'), { onZoneClick: selectZone });
+    v.onAutoRotate = setAutoUI;
+    await v.ready;
+    viewer = v;
+    if (state.mode !== 'face') viewer.setMode(state.mode, true);
     viewer.setMetal(state.metal);
-    if (state.zone) { viewer.setActiveZone(state.zone); updateJewelry(); }
+    syncViewer();
+    if (state.zone) viewer.focusZone(ZONES.find((z) => z.id === state.zone));
+    setAutoUI(viewer.controls.autoRotate);
     $('#viewer-loading').classList.add('is-gone');
     window.__viewer = viewer;
   } catch (err) {
