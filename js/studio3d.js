@@ -1,6 +1,6 @@
 /* =========================================================================
-   Estúdio 3D — cabeça realista (scan) + manequim da área íntima,
-   pontos clicáveis e joias aplicadas na superfície.
+   Estúdio 3D — cabeça realista (scan), pontos clicáveis e joias
+   aplicadas na superfície.
    ========================================================================= */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -10,11 +10,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const HEAD_DIR = 'assets/models/head/';
 const V3 = THREE.Vector3;
 
-const g2 = (dx, dy, sx, sy) => Math.exp(-((dx / sx) ** 2) - ((dy / sy) ** 2));
-const smooth = (a, b, v) => {
-  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 function radialTexture(inner, outer) {
@@ -49,92 +44,6 @@ function buildPlinth(topY, rx, rz, h = 0.24) {
   shadow.position.y = topY - h - 0.005;
   g.add(base, ring, shadow);
   return g;
-}
-
-/* ------------------------- manequim (área íntima) ------------------------ */
-// Perfis por altura: [y, largura, profundidade frente, profundidade costas]
-const TORSO_PROFILE = {
-  fem: [
-    [1.72, 0.16, 0.16, 0.16], [1.45, 0.18, 0.17, 0.18], [1.3, 0.4, 0.22, 0.24], [1.17, 0.63, 0.25, 0.27],
-    [1.0, 0.64, 0.29, 0.28], [0.8, 0.6, 0.31, 0.28], [0.55, 0.53, 0.28, 0.27], [0.22, 0.45, 0.26, 0.25],
-    [-0.12, 0.55, 0.29, 0.3], [-0.45, 0.66, 0.32, 0.37], [-0.75, 0.6, 0.3, 0.35], [-0.93, 0.44, 0.23, 0.27],
-    [-1.02, 0.26, 0.14, 0.16], [-1.07, 0.0, 0.0, 0.0],
-  ],
-  masc: [
-    [1.72, 0.19, 0.19, 0.19], [1.45, 0.21, 0.2, 0.21], [1.3, 0.5, 0.26, 0.27], [1.17, 0.78, 0.27, 0.29],
-    [1.0, 0.76, 0.31, 0.31], [0.8, 0.68, 0.33, 0.3], [0.55, 0.6, 0.3, 0.28], [0.22, 0.54, 0.28, 0.26],
-    [-0.12, 0.55, 0.28, 0.28], [-0.45, 0.59, 0.3, 0.33], [-0.75, 0.55, 0.29, 0.32], [-0.93, 0.41, 0.22, 0.25],
-    [-1.02, 0.25, 0.14, 0.15], [-1.07, 0.0, 0.0, 0.0],
-  ],
-};
-
-function sampleProfile(prof, y) {
-  // Catmull-Rom sobre as linhas da tabela (ordenadas de cima para baixo)
-  let i = 0;
-  while (i < prof.length - 2 && y < prof[i + 1][0]) i++;
-  const p0 = prof[Math.max(0, i - 1)], p1 = prof[i], p2 = prof[i + 1], p3 = prof[Math.min(prof.length - 1, i + 2)];
-  const t = Math.min(1, Math.max(0, (p1[0] - y) / (p1[0] - p2[0])));
-  const out = [];
-  for (let k = 1; k < 4; k++) {
-    const a = p0[k], b = p1[k], c = p2[k], d = p3[k];
-    out.push(Math.max(0, 0.5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t)));
-  }
-  return out;
-}
-
-function buildTorsoGeometry(kind) {
-  const prof = TORSO_PROFILE[kind];
-  const top = prof[0][0], bottom = prof[prof.length - 1][0];
-  const ROWS = 150, COLS = 120;
-  const pos = [];
-  const idx = [];
-  // vértice do topo
-  pos.push(0, top + 0.012, 0);
-  for (let r = 1; r < ROWS; r++) {
-    const y = top + (bottom - top) * (r / ROWS);
-    const [a, bf, bb] = sampleProfile(prof, y);
-    // ombros mais "quadrados", resto elíptico
-    const n = 2 + 0.9 * g2(0, y - 1.12, 1, 0.16);
-    for (let c = 0; c < COLS; c++) {
-      const u = (c / COLS) * Math.PI * 2 + Math.PI; // costura nas costas
-      const su = Math.sin(u), cu = Math.cos(u);
-      let x = a * Math.sign(su) * Math.pow(Math.abs(su), 2 / n);
-      const b = cu >= 0 ? bf : bb;
-      let z = b * Math.sign(cu) * Math.pow(Math.abs(cu), 2 / n);
-      const front = smooth(0.0, 0.7, cu);
-      const back = smooth(0.0, 0.7, -cu);
-      const ax = Math.abs(x);
-      if (kind === 'fem') {
-        z += 0.17 * g2(ax - 0.29, y - 0.7, 0.17, 0.15) * front;   // busto
-        z += 0.07 * g2(ax - 0.24, y + 0.62, 0.24, 0.24) * back;   // glúteos
-      } else {
-        z += 0.055 * g2(ax - 0.3, y - 0.84, 0.24, 0.13) * front;  // peitoral
-        z += 0.04 * g2(ax - 0.22, y + 0.58, 0.22, 0.22) * back;
-        z += 0.012 * g2(ax - 0.12, y - 0.32, 0.08, 0.3) * front;  // abdômen
-      }
-      z += 0.012 * g2(ax - 0.3, y - 1.16, 0.18, 0.04) * front;    // clavículas
-      z -= 0.022 * g2(x, y - 0.12, 0.028, 0.028) * front;          // umbigo
-      z -= 0.018 * g2(x, 0, 0.05, 1) * back * smooth(1.3, 0.9, y) * smooth(-0.6, -0.2, y); // coluna
-      pos.push(x, y, z);
-    }
-  }
-  pos.push(0, bottom, 0);
-  const last = pos.length / 3 - 1;
-  const ringStart = (r) => 1 + (r - 1) * COLS;
-  for (let c = 0; c < COLS; c++) idx.push(0, ringStart(1) + ((c + 1) % COLS), ringStart(1) + c);
-  for (let r = 1; r < ROWS - 1; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const a = ringStart(r) + c, b = ringStart(r) + ((c + 1) % COLS);
-      const d = ringStart(r + 1) + c, e = ringStart(r + 1) + ((c + 1) % COLS);
-      idx.push(a, b, d, b, e, d);
-    }
-  }
-  for (let c = 0; c < COLS; c++) idx.push(ringStart(ROWS - 1) + c, ringStart(ROWS - 1) + ((c + 1) % COLS), last);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setIndex(idx);
-  geo.computeVertexNormals();
-  return geo;
 }
 
 /* --------------------------------- joias --------------------------------- */
@@ -224,7 +133,6 @@ export class StudioViewer {
     this.tween = null;
     this.visible = true;
     this.mode = 'face';
-    this.gender = 'fem';
     this.models = {};
 
     const w = container.clientWidth, h = container.clientHeight;
@@ -282,7 +190,6 @@ export class StudioViewer {
     scene.add(this.jewelGroup);
     this.raycaster = new THREE.Raycaster();
 
-    this.buildTorso();
     this.bindEvents();
     new IntersectionObserver((e) => { this.visible = e[0].isIntersecting; }).observe(container);
 
@@ -328,39 +235,6 @@ export class StudioViewer {
     };
   }
 
-  buildTorso() {
-    const mat = new THREE.MeshPhysicalMaterial({
-      color: 0xeadfd3, roughness: 0.42, metalness: 0,
-      clearcoat: 0.35, clearcoatRoughness: 0.35,
-      sheen: 0.4, sheenColor: new THREE.Color(0xffd8c8), sheenRoughness: 0.5, envMapIntensity: 0.7,
-    });
-    const root = new THREE.Group();
-    const fem = new THREE.Mesh(buildTorsoGeometry('fem'), mat);
-    const masc = new THREE.Mesh(buildTorsoGeometry('masc'), mat);
-    root.add(fem, masc);
-    const gold = new THREE.MeshStandardMaterial({ color: 0xd8b26e, metalness: 1, roughness: 0.25 });
-    // tampa do pescoço e haste
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.06, 40), gold);
-    cap.position.y = 1.75;
-    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 24, 24), gold);
-    knob.position.y = 1.81;
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.3, 24), gold);
-    pole.position.y = -1.7;
-    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.1, 24), gold);
-    collar.position.y = -1.08;
-    root.add(cap, knob, pole, collar);
-    const group = new THREE.Group();
-    group.add(root, buildPlinth(-2.33, 0.95, 0.95, 0.18));
-    group.visible = false;
-    this.scene.add(group);
-    this.models.intimo = {
-      group, root, fem, masc,
-      get pickables() { return [this.fem.visible ? this.fem : this.masc]; },
-      home: { pos: new V3(2.6, 0.7, 8.6), target: new V3(0, -0.25, 0) },
-    };
-    this.setGender('fem');
-  }
-
   get current() { return this.models[this.mode]; }
   get pickables() { return this.current.pickables; }
 
@@ -375,14 +249,6 @@ export class StudioViewer {
     } else {
       this.flyTo(h.pos, h.target);
     }
-  }
-
-  setGender(g) {
-    this.gender = g;
-    const m = this.models.intimo;
-    m.fem.visible = g === 'fem';
-    m.masc.visible = g === 'masc';
-    m.root.updateMatrixWorld(true);
   }
 
   /* ---------------------------- pontos ---------------------------- */

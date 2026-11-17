@@ -77,10 +77,8 @@ $('#contact-form').addEventListener('submit', (e) => {
 /* ------------------------------ estúdio 3D ------------------------------ */
 const REGION = new Map(REGIONS.map((r) => [r.id, r]));
 const zoneMode = (z) => REGION.get(z.region).mode;
-const zoneGender = (z) => REGION.get(z.region).gender || null;
 const state = {
-  mode: 'face',
-  gender: 'fem',
+  mode: 'face',      // 'face' = boneco 3D | 'intimo' = área íntima (somente texto)
   region: 'orelha',
   zone: null,
   preview: null,
@@ -90,6 +88,7 @@ const state = {
 };
 try { state.adult = sessionStorage.getItem('ll-adult') === '1'; } catch { /* sem storage */ }
 let viewer = null;
+const studio = $('#estudio');
 
 const ICONS = {
   ear: '<path d="M15 20c3 0 3-4 5-6 3-3 2-11-5-11S8 8 8 10" /><path d="M11 11a3 3 0 0 1 6 0c0 2-2 2-2 4"/>',
@@ -101,7 +100,7 @@ const ICONS = {
   masc: '<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>',
 };
 
-const visibleZones = () => ZONES.filter((z) => zoneMode(z) === state.mode && (!zoneGender(z) || zoneGender(z) === state.gender));
+const faceZones = () => ZONES.filter((z) => zoneMode(z) === 'face');
 
 function renderRegionTabs() {
   const tabs = $('#region-tabs');
@@ -121,30 +120,22 @@ function renderRegionTabs() {
   }
 }
 
-function syncViewer() {
-  if (!viewer) return;
-  viewer.setGender(state.gender);
-  viewer.setZones(visibleZones());
-  viewer.setActiveZone(state.zone);
-  updateJewelry();
-}
-
 function setRegion(id, focusFirst = false) {
-  const r = REGION.get(id);
   state.region = id;
-  if (r.gender && r.gender !== state.gender) {
-    state.gender = r.gender;
-    syncViewer();
-  }
   renderRegionTabs();
   renderZoneList();
+  if (state.mode === 'intimo') {
+    state.zone = null;
+    renderIntimo();
+    return;
+  }
   if (focusFirst) {
     const first = ZONES.find((z) => z.region === id);
     if (first) selectZone(first.id);
   }
 }
 
-/* troca entre rosto e área íntima (+18) */
+/* troca entre o boneco 3D e a área íntima (+18, somente texto) */
 const gate = $('#gate');
 function setMode(mode, after) {
   if (mode === 'intimo' && !state.adult) {
@@ -158,19 +149,19 @@ function setMode(mode, after) {
   state.mode = mode;
   state.zone = null;
   state.preview = null;
-  state.region = REGIONS.find((r) => r.mode === mode && (!r.gender || r.gender === state.gender)).id;
+  state.region = REGIONS.find((r) => r.mode === mode).id;
   $$('.mode-btn').forEach((b) => {
     const on = b.dataset.mode === mode;
     b.classList.toggle('is-on', on);
     b.setAttribute('aria-selected', String(on));
   });
-  $('#estudio').classList.toggle('is-intimo', mode === 'intimo');
+  studio.classList.toggle('is-intimo', mode === 'intimo');
   renderRegionTabs();
   renderZoneList();
-  renderEmpty();
-  if (viewer) {
-    viewer.setMode(mode);
-    syncViewer();
+  if (mode === 'intimo') renderIntimo();
+  else {
+    renderEmpty();
+    if (viewer) { viewer.setActiveZone(null); viewer.resetView(); updateJewelry(); }
   }
   after && after();
 }
@@ -194,16 +185,16 @@ function renderEmpty() {
   $('#zone-detail').innerHTML = `
     <div class="zone-empty">
       <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="6" fill="none" stroke="currentColor"/><circle cx="24" cy="24" r="14" fill="none" stroke="currentColor" stroke-dasharray="2 4"/></svg>
-      <p>${state.mode === 'intimo'
-        ? 'Gire o manequim e toque em um ponto, ou escolha uma região acima. Todas as informações são confidenciais e o atendimento é reservado.'
-        : 'Gire o boneco e toque em um ponto dourado, ou escolha uma região acima para ver os piercings disponíveis.'}</p>
+      <p>Gire o boneco e toque em um ponto dourado, ou escolha uma região acima para ver os piercings disponíveis.</p>
     </div>`;
 }
 
 function renderZoneList() {
   const list = $('#zone-list');
   list.innerHTML = '';
-  for (const z of ZONES.filter((z) => z.region === state.region)) {
+  const zs = ZONES.filter((z) => z.region === state.region);
+  list.classList.toggle('is-single', zs.length < 2);
+  for (const z of zs) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'zone-chip' + (state.zone === z.id ? ' is-on' : '');
@@ -221,9 +212,21 @@ function pain(n) {
 function selectZone(id) {
   const z = ZONES.find((z) => z.id === id);
   if (!z) return;
+  if (zoneMode(z) === 'intimo') {
+    const go = () => {
+      if (state.region !== z.region) setRegion(z.region);
+      state.zone = id;
+      renderZoneList();
+      const sec = document.getElementById(`int-${id}`);
+      if (sec) {
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        sec.classList.remove('is-flash'); void sec.offsetWidth; sec.classList.add('is-flash');
+      }
+    };
+    setMode('intimo', go);
+    return;
+  }
   const go = () => {
-    const g = zoneGender(z);
-    if (g && g !== state.gender) { state.gender = g; syncViewer(); }
     state.region = z.region;
     state.zone = id;
     renderRegionTabs();
@@ -235,60 +238,79 @@ function selectZone(id) {
     renderDetail();
     updateJewelry();
   };
-  if (zoneMode(z) !== state.mode) setMode(zoneMode(z), go);
-  else go();
+  setMode('face', go);
 }
 
 const waMsg = (p) => zoneMode(p.zone) === 'intimo'
   ? `Olá, Lorena! Gostaria de informações sobre o piercing ${p.name}. Pode me passar os horários disponíveis para avaliação?`
   : `Olá, Lorena! Tenho interesse no piercing ${p.name} (${p.zone.name}). Pode me passar os horários disponíveis?`;
 
+function cardHTML(p, z, open) {
+  const on = state.project.has(p.id);
+  const intimo = zoneMode(z) === 'intimo';
+  const prev = !open && state.preview === p.id;
+  return `
+    <article class="p-card${prev ? ' is-preview' : ''}${open ? ' is-open' : ''}${on ? ' is-added' : ''}" data-id="${p.id}"${open ? '' : ` tabindex="0" aria-label="Ver detalhes de ${p.name}"`}>
+      <div class="p-top">
+        <h4>${p.name}</h4>
+        <span class="p-price">a partir de <b>${brl(p.price)}</b></span>
+      </div>
+      <p class="p-desc">${p.desc}</p>
+      <dl class="p-meta">
+        <div><dt>Cicatrização</dt><dd>${p.healing}</dd></div>
+        <div><dt>Desconforto</dt><dd>${pain(p.pain)}</dd></div>
+        <div class="wide"><dt>Joia indicada</dt><dd>${p.jewelry}</dd></div>
+      </dl>
+      <div class="p-actions">
+        <button type="button" class="btn btn-sm ${on ? 'btn-ghost' : 'btn-gold'} js-add" aria-pressed="${on}">${on ? '✓ No projeto' : '+ Adicionar ao projeto'}</button>
+        <a class="link-sm" target="_blank" rel="noopener" href="${waLink(waMsg({ ...p, zone: z }))}">${intimo ? 'Agendar avaliação' : 'Agendar este'}</a>
+      </div>
+    </article>`;
+}
+
+function bindCards(box) {
+  $$('.p-card', box).forEach((card) => {
+    const id = card.dataset.id;
+    $('.js-add', card).addEventListener('click', () => toggleProject(id));
+    if (card.classList.contains('is-open')) return;
+    const preview = () => { state.preview = id; renderDetail(); updateJewelry(); };
+    card.addEventListener('click', (e) => { if (!e.target.closest('a, .js-add')) preview(); });
+    card.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); preview(); } });
+  });
+}
+
 function renderDetail() {
+  if (state.mode === 'intimo') { renderIntimo(); return; }
   const z = ZONES.find((z) => z.id === state.zone);
   const box = $('#zone-detail');
   if (!z) return;
-  const intimo = zoneMode(z) === 'intimo';
   box.innerHTML = `
     <div class="zone-head">
       <h3>${z.name}</h3>
       <p>${z.blurb}</p>
     </div>
-    <div class="p-cards">
-      ${z.piercings.map((p) => {
-        const on = state.project.has(p.id);
-        const prev = state.preview === p.id;
-        return `
-        <article class="p-card${prev ? ' is-preview' : ''}${on ? ' is-added' : ''}" data-id="${p.id}" tabindex="0" aria-label="Ver detalhes de ${p.name}">
-          <div class="p-top">
-            <h4>${p.name}</h4>
-            <span class="p-price">a partir de <b>${brl(p.price)}</b></span>
-          </div>
-          <p class="p-desc">${p.desc}</p>
-          <dl class="p-meta">
-            <div><dt>Cicatrização</dt><dd>${p.healing}</dd></div>
-            <div><dt>Desconforto</dt><dd>${pain(p.pain)}</dd></div>
-            <div class="wide"><dt>Joia indicada</dt><dd>${p.jewelry}</dd></div>
-          </dl>
-          ${intimo && !p.render.length ? '<p class="p-note">Somente mediante avaliação anatômica presencial, em sala reservada.</p>' : ''}
-          <div class="p-actions">
-            <button type="button" class="btn btn-sm ${on ? 'btn-ghost' : 'btn-gold'} js-add" aria-pressed="${on}">${on ? '✓ No projeto' : '+ Adicionar ao projeto'}</button>
-            <a class="link-sm" target="_blank" rel="noopener" href="${waLink(waMsg({ ...p, zone: z }))}">Agendar este</a>
-          </div>
-        </article>`;
-      }).join('')}
-    </div>`;
-  $$('.p-card', box).forEach((card) => {
-    const id = card.dataset.id;
-    const preview = () => { state.preview = id; renderDetail(); updateJewelry(); };
-    card.addEventListener('click', (e) => { if (!e.target.closest('a, .js-add')) preview(); });
-    card.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); preview(); } });
-    $('.js-add', card).addEventListener('click', () => toggleProject(id));
-  });
+    <div class="p-cards">${z.piercings.map((p) => cardHTML(p, z, false)).join('')}</div>`;
+  bindCards(box);
+}
+
+/* área íntima: todas as opções da aba atual, por escrito */
+function renderIntimo() {
+  const box = $('#zone-detail');
+  const zones = ZONES.filter((z) => z.region === state.region);
+  box.innerHTML = zones.map((z) => `
+    <section class="int-zone" id="int-${z.id}">
+      <div class="zone-head">
+        <h3>${z.name}</h3>
+        <p>${z.blurb}</p>
+      </div>
+      <div class="p-cards int-cards">${z.piercings.map((p) => cardHTML(p, z, true)).join('')}</div>
+    </section>`).join('');
+  bindCards(box);
 }
 
 function toggleProject(id) {
   if (state.project.has(id)) state.project.delete(id);
-  else { state.project.add(id); state.preview = id; }
+  else { state.project.add(id); if (state.mode === 'face') state.preview = id; }
   renderDetail();
   renderZoneList();
   renderProject();
@@ -308,7 +330,7 @@ function renderProject() {
   $$('.pc-x').forEach((b) => b.addEventListener('click', () => toggleProject(b.dataset.id)));
   $$('.pc-go').forEach((b) => b.addEventListener('click', () => selectZone(b.dataset.zone)));
   const msg = [
-    'Olá, Lorena! Montei meu projeto no estúdio 3D do site:',
+    'Olá, Lorena! Montei meu projeto no site:',
     ...items.map((p) => `• ${p.name} (${p.zone.name})`),
     `Metal preferido: ${state.metal.name}.`,
     `Estimativa: a partir de ${brl(total)}.`,
@@ -321,12 +343,12 @@ $('#project-clear').addEventListener('click', () => {
   renderProject(); renderZoneList(); renderDetail(); updateJewelry();
 });
 
+/* joias no boneco: somente piercings do rosto/orelha */
 function updateJewelry() {
   if (!viewer) return;
-  const visible = new Set(visibleZones().map((z) => z.id));
   const ids = new Set(state.project);
   if (state.preview) ids.add(state.preview);
-  viewer.showJewelry([...ids].map((id) => byId.get(id)).filter((p) => visible.has(p.zone.id)).flatMap((p) => p.render));
+  viewer.showJewelry([...ids].map((id) => byId.get(id)).filter((p) => zoneMode(p.zone) === 'face' && p.render).flatMap((p) => p.render));
 }
 
 /* seletor de metal */
@@ -387,10 +409,11 @@ const boot = new IntersectionObserver(async (entries) => {
     v.onAutoRotate = setAutoUI;
     await v.ready;
     viewer = v;
-    if (state.mode !== 'face') viewer.setMode(state.mode, true);
     viewer.setMetal(state.metal);
-    syncViewer();
-    if (state.zone) viewer.focusZone(ZONES.find((z) => z.id === state.zone));
+    viewer.setZones(faceZones());
+    updateJewelry();
+    const cur = ZONES.find((z) => z.id === state.zone);
+    if (cur && zoneMode(cur) === 'face') { viewer.setActiveZone(cur.id); viewer.focusZone(cur); }
     setAutoUI(viewer.controls.autoRotate);
     $('#viewer-loading').classList.add('is-gone');
     window.__viewer = viewer;

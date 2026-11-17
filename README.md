@@ -3,7 +3,7 @@
 Site institucional e portfólio do estúdio **Lorena Lua Piercings**, com um **estúdio 3D interativo** em duas áreas:
 
 - **Rosto & Orelhas** — cabeça 3D realista (escaneada, com textura de pele). O cliente gira o boneco (arrastando, pelas setas na tela ou pelo teclado), toca nos pontos dourados (lóbulo, hélix, tragus, daith, narina, septo, lábios, sobrancelha…) e vê os piercings de cada região com a joia aplicada no modelo.
-- **Área Íntima (+18)** — protegida por confirmação de idade, com manequim de costura (sem anatomia explícita) nas versões feminina e masculina: mamilos, íntimo feminino e íntimo masculino.
+- **Área Íntima (+18)** — protegida por confirmação de idade e **somente com opções escritas** (sem 3D): mamilos, íntimo feminino e íntimo masculino, com as regras de atendimento (maioridade, avaliação anatômica, sala reservada).
 
 Cada piercing mostra descrição, cicatrização, nível de desconforto, joia indicada e preço de referência. Os escolhidos formam um "Meu projeto" que é enviado pronto pelo WhatsApp.
 
@@ -39,7 +39,7 @@ Settings → Pages → *Deploy from a branch* → escolha a branch e a pasta `/ 
 index.html          página
 css/style.css       estilos
 js/main.js          interface (estúdio, projeto, portfólio, formulário)
-js/studio3d.js      cena 3D: cabeça realista, manequim, pontos e joias
+js/studio3d.js      cena 3D: cabeça realista, pontos e joias
 js/data.js          conteúdo editável
 vendor/three/       three.js r160 (licença MIT)
 assets/models/head  modelo 3D da cabeça + texturas

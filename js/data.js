@@ -33,8 +33,9 @@ export const METALS = [
 
 /* -------------------------------------------------------------------------
    Estúdio 3D
-   - REGIONS: abas do painel. mode 'face' = cabeça realista;
-              mode 'intimo' = manequim da área íntima (+18).
+   - REGIONS: abas do painel. mode 'face' = cabeça 3D realista;
+              mode 'intimo' = área íntima (+18), apenas opções escritas
+              (as zonas íntimas não usam anchor/view/render).
    - ZONES:   pontos clicáveis do boneco e os piercings de cada um.
        anchor / render[].f: [x, y]  -> ponto projetado de FRENTE no modelo
        anchor / render[].s: [y, z]  -> ponto projetado pela LATERAL (orelha)
@@ -48,14 +49,12 @@ export const REGIONS = [
   { id: 'boca', mode: 'face', name: 'Boca & Lábios', icon: 'lips' },
   { id: 'rosto', mode: 'face', name: 'Sobrancelha & Rosto', icon: 'brow' },
   { id: 'mamilos', mode: 'intimo', name: 'Mamilos', icon: 'chest' },
-  { id: 'feminino', mode: 'intimo', gender: 'fem', name: 'Íntimo Feminino', icon: 'fem' },
-  { id: 'masculino', mode: 'intimo', gender: 'masc', name: 'Íntimo Masculino', icon: 'masc' },
+  { id: 'feminino', mode: 'intimo', name: 'Íntimo Feminino', icon: 'fem' },
+  { id: 'masculino', mode: 'intimo', name: 'Íntimo Masculino', icon: 'masc' },
 ];
 
 const V_EAR = { pos: [8.2, 1.7, 1.2], target: [1.55, 1.3, 0.25] };
 const V_MOUTH = { pos: [1.6, 0.1, 7.6], target: [-0.08, 0.45, 2.0] };
-const V_CHEST = { pos: [1.3, 1.0, 3.9], target: [0.1, 0.72, 0.3] };
-const V_INT = { pos: [1.0, -0.55, 3.6], target: [0, -0.8, 0.25] };
 
 export const ZONES = [
   /* ------------------------------ ORELHA ------------------------------ */
@@ -318,163 +317,124 @@ export const ZONES = [
     ],
   },
 
-  /* ============================ ÁREA ÍNTIMA (+18) ===================== */
+  /* ============================ ÁREA ÍNTIMA (+18) — somente texto ====== */
   {
     id: 'mamilo', region: 'mamilos', name: 'Mamilos',
-    anchor: { f: [0.3, 0.72] },
-    view: V_CHEST,
     blurb: 'Perfurações horizontais, verticais ou cruzadas. Realizadas em qualquer gênero, com joia sob medida para a sua anatomia.',
     piercings: [
       { id: 'mamilo-h', name: 'Mamilo Horizontal', pain: 3, healing: '6 a 12 meses', price: 160,
         jewelry: 'Barbell reto em titânio F136 (par)',
-        desc: 'O mais tradicional. Pode ser feito em um ou nos dois lados — o valor indicado é por unidade.',
-        render: [{ type: 'bar', f: [0.3, 0.72], size: 1 }, { type: 'bar', f: [-0.3, 0.72], size: 1 }] },
+        desc: 'O mais tradicional. Pode ser feito em um ou nos dois lados — o valor indicado é por unidade.' },
       { id: 'mamilo-v', name: 'Mamilo Vertical', pain: 3, healing: '6 a 12 meses', price: 160,
         jewelry: 'Barbell reto vertical',
-        desc: 'Orientação vertical, ideal conforme a anatomia. Avaliamos antes de definir a direção.',
-        render: [{ type: 'bar', f: [0.3, 0.72], size: 1, rot: [0, 0, 90] }, { type: 'bar', f: [-0.3, 0.72], size: 1, rot: [0, 0, 90] }] },
+        desc: 'Orientação vertical, ideal conforme a anatomia. Avaliamos antes de definir a direção.' },
       { id: 'mamilo-x', name: 'Mamilo Duplo (Cruz)', pain: 4, healing: '9 a 12 meses', price: 290,
         jewelry: 'Dois barbells cruzados',
-        desc: 'Combinação horizontal + vertical no mesmo mamilo, formando uma cruz.',
-        render: [{ type: 'bar', f: [0.3, 0.72], size: 1 }, { type: 'bar', f: [0.3, 0.72], size: 1, rot: [0, 0, 90], lift: 0.012 }] },
+        desc: 'Combinação horizontal + vertical no mesmo mamilo, formando uma cruz.' },
       { id: 'mamilo-argola', name: 'Mamilo com Argola', pain: 3, healing: '6 a 12 meses', price: 170,
         jewelry: 'Barbell inicial; argola após cicatrização',
-        desc: 'Começamos com barbell para cicatrizar melhor e trocamos por argola depois da liberação.',
-        render: [{ type: 'ring', f: [0.3, 0.72], size: 1.3 }, { type: 'ring', f: [-0.3, 0.72], size: 1.3 }] },
+        desc: 'Começamos com barbell para cicatrizar melhor e trocamos por argola depois da liberação.' },
     ],
   },
   /* femininos */
   {
     id: 'f-pubis', region: 'feminino', name: 'Púbis',
-    anchor: { f: [0, -0.6] },
-    view: V_INT,
     blurb: 'Perfurações de superfície na região do monte púbico, acima da área genital.',
     piercings: [
       { id: 'christina', name: 'Christina', pain: 3, healing: '3 a 6 meses', price: 260,
         jewelry: 'Barbell em L ou curvo de superfície',
-        desc: 'Vertical, na junção dos grandes lábios com o monte púbico. Exige anatomia adequada — avaliação obrigatória.',
-        render: [] },
+        desc: 'Vertical, na junção dos grandes lábios com o monte púbico. Exige anatomia adequada — avaliação obrigatória.' },
       { id: 'nefertiti', name: 'Nefertiti', pain: 4, healing: '6 a 12 meses', price: 320,
         jewelry: 'Barbell curvo longo',
-        desc: 'Variação vertical que une capuz e monte púbico. Indicado apenas após avaliação anatômica.',
-        render: [] },
+        desc: 'Variação vertical que une capuz e monte púbico. Indicado apenas após avaliação anatômica.' },
     ],
   },
   {
     id: 'f-capuz', region: 'feminino', name: 'Capuz Clitoriano',
-    anchor: { f: [0, -0.8] },
-    view: V_INT,
     blurb: 'Os piercings íntimos femininos mais procurados. Passam pelo capuz, sem atravessar o clitóris.',
     piercings: [
       { id: 'vch', name: 'VCH — Capuz Vertical', pain: 2, healing: '4 a 8 semanas', price: 240,
         jewelry: 'J-bar ou barbell curvo em titânio',
-        desc: 'O mais popular. Cicatrização rápida e conforto no dia a dia. Precisa de anatomia compatível.',
-        render: [] },
+        desc: 'O mais popular. Cicatrização rápida e conforto no dia a dia. Precisa de anatomia compatível.' },
       { id: 'hch', name: 'HCH — Capuz Horizontal', pain: 2, healing: '6 a 8 semanas', price: 240,
         jewelry: 'Argola ou barbell curvo',
-        desc: 'Horizontal na base do capuz. Ótima opção quando a anatomia não favorece o VCH.',
-        render: [] },
+        desc: 'Horizontal na base do capuz. Ótima opção quando a anatomia não favorece o VCH.' },
       { id: 'triangulo', name: 'Triângulo', pain: 4, healing: '2 a 4 meses', price: 300,
         jewelry: 'Argola ou barbell curvo',
-        desc: 'Horizontal sob a base do capuz. Altamente dependente de anatomia — apenas com avaliação.',
-        render: [] },
+        desc: 'Horizontal sob a base do capuz. Altamente dependente de anatomia — apenas com avaliação.' },
     ],
   },
   {
     id: 'f-labios', region: 'feminino', name: 'Lábios & Fourchette',
-    anchor: { f: [0, -0.93] },
-    view: V_INT,
     blurb: 'Lábios internos, externos e a região posterior. Possibilidades delicadas e personalizadas.',
     piercings: [
       { id: 'labio-interno', name: 'Lábio Interno', pain: 2, healing: '4 a 8 semanas', price: 220,
         jewelry: 'Argola fina ou ferradura',
-        desc: 'Nos pequenos lábios. Cicatrização rápida; pode ser feito em pares ou em escada.',
-        render: [] },
+        desc: 'Nos pequenos lábios. Cicatrização rápida; pode ser feito em pares ou em escada.' },
       { id: 'labio-externo', name: 'Lábio Externo', pain: 3, healing: '2 a 4 meses', price: 240,
         jewelry: 'Argola ou barbell curvo',
-        desc: 'Nos grandes lábios. Tecido mais espesso, cicatrização um pouco mais longa.',
-        render: [] },
+        desc: 'Nos grandes lábios. Tecido mais espesso, cicatrização um pouco mais longa.' },
       { id: 'fourchette', name: 'Fourchette', pain: 3, healing: '6 a 8 semanas', price: 260,
         jewelry: 'Barbell curvo ou argola',
-        desc: 'Na borda posterior da vulva. Depende de anatomia — avaliamos antes.',
-        render: [] },
+        desc: 'Na borda posterior da vulva. Depende de anatomia — avaliamos antes.' },
       { id: 'princess-albertina', name: 'Princess Albertina', pain: 3, healing: '2 a 4 meses', price: 300,
         jewelry: 'Argola ou barbell curvo',
-        desc: 'Passa pela uretra e sai na região interna. Procedimento avançado, com avaliação obrigatória.',
-        render: [] },
+        desc: 'Passa pela uretra e sai na região interna. Procedimento avançado, com avaliação obrigatória.' },
     ],
   },
   /* masculinos */
   {
     id: 'm-pubis', region: 'masculino', name: 'Púbis',
-    anchor: { f: [0, -0.58] },
-    view: V_INT,
     blurb: 'Perfuração de superfície na base, acima da região genital.',
     piercings: [
       { id: 'pubic', name: 'Pubic', pain: 3, healing: '6 a 12 meses', price: 260,
         jewelry: 'Barbell curvo de superfície',
-        desc: 'Na junção entre o púbis e a base do pênis. Requer avaliação anatômica.',
-        render: [] },
+        desc: 'Na junção entre o púbis e a base do pênis. Requer avaliação anatômica.' },
     ],
   },
   {
     id: 'm-glande', region: 'masculino', name: 'Glande',
-    anchor: { f: [0, -0.78] },
-    view: V_INT,
     blurb: 'Perfurações na glande e na coroa: das clássicas às mais avançadas.',
     piercings: [
       { id: 'prince-albert', name: 'Prince Albert', pain: 3, healing: '4 a 8 semanas', price: 280,
         jewelry: 'Argola ou barbell curvo de calibre maior',
-        desc: 'O piercing íntimo masculino mais conhecido. Cicatrização rápida pela região uretral.',
-        render: [] },
+        desc: 'O piercing íntimo masculino mais conhecido. Cicatrização rápida pela região uretral.' },
       { id: 'reverse-pa', name: 'Reverse PA', pain: 4, healing: '4 a 6 meses', price: 320,
         jewelry: 'Barbell curvo',
-        desc: 'Variação do Prince Albert que sai na parte superior da glande.',
-        render: [] },
+        desc: 'Variação do Prince Albert que sai na parte superior da glande.' },
       { id: 'ampallang', name: 'Ampallang', pain: 5, healing: '6 a 12 meses', price: 360,
         jewelry: 'Barbell reto',
-        desc: 'Horizontal através da glande. Procedimento avançado, indicado para quem já tem experiência.',
-        render: [] },
+        desc: 'Horizontal através da glande. Procedimento avançado, indicado para quem já tem experiência.' },
       { id: 'apadravya', name: 'Apadravya', pain: 5, healing: '6 a 12 meses', price: 360,
         jewelry: 'Barbell reto',
-        desc: 'Vertical através da glande. Avaliação anatômica obrigatória.',
-        render: [] },
+        desc: 'Vertical através da glande. Avaliação anatômica obrigatória.' },
       { id: 'dydoe', name: 'Dydoe', pain: 3, healing: '2 a 4 meses', price: 260,
         jewelry: 'Barbell curvo',
-        desc: 'Atravessa a borda da coroa da glande. Pode ser feito em pares.',
-        render: [] },
+        desc: 'Atravessa a borda da coroa da glande. Pode ser feito em pares.' },
     ],
   },
   {
     id: 'm-haste', region: 'masculino', name: 'Frênulo & Haste',
-    anchor: { f: [0, -0.88] },
-    view: V_INT,
     blurb: 'Perfurações na pele da parte inferior: frênulo, escada e lorum.',
     piercings: [
       { id: 'frenulo', name: 'Frênulo', pain: 2, healing: '2 a 3 meses', price: 240,
         jewelry: 'Barbell reto ou curvo',
-        desc: 'Superficial, na pele logo abaixo da glande. Pode evoluir para uma "escada" (ladder).',
-        render: [] },
+        desc: 'Superficial, na pele logo abaixo da glande. Pode evoluir para uma "escada" (ladder).' },
       { id: 'lorum', name: 'Lorum', pain: 2, healing: '2 a 3 meses', price: 240,
         jewelry: 'Barbell reto',
-        desc: 'Na base inferior, na transição para o escroto.',
-        render: [] },
+        desc: 'Na base inferior, na transição para o escroto.' },
     ],
   },
   {
     id: 'm-escroto', region: 'masculino', name: 'Escroto & Períneo',
-    anchor: { f: [0, -0.98] },
-    view: V_INT,
     blurb: 'Perfurações de pele na região inferior, discretas e de cicatrização tranquila.',
     piercings: [
       { id: 'hafada', name: 'Hafada', pain: 2, healing: '2 a 3 meses', price: 220,
         jewelry: 'Argola ou barbell',
-        desc: 'Na pele do escroto. Pode ser feito em sequência.',
-        render: [] },
+        desc: 'Na pele do escroto. Pode ser feito em sequência.' },
       { id: 'guiche', name: 'Guiche', pain: 3, healing: '3 a 6 meses', price: 260,
         jewelry: 'Argola ou barbell curvo',
-        desc: 'Horizontal no períneo, entre o escroto e o ânus.',
-        render: [] },
+        desc: 'Horizontal no períneo, entre o escroto e o ânus.' },
     ],
   },
 ];
