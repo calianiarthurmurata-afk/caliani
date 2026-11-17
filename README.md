@@ -1,11 +1,11 @@
 # Lorena Lua Piercings — site portfólio
 
-Site institucional e portfólio do estúdio **Lorena Lua Piercings**, com um **estúdio 3D interativo** em duas áreas:
+Site da **Lorena Lua Piercings**: claro, direto e pensado para o celular.
 
-- **Rosto & Orelhas** — cabeça 3D realista (escaneada, com textura de pele). O cliente gira o boneco (arrastando, pelas setas na tela ou pelo teclado), toca nos pontos dourados (lóbulo, hélix, tragus, daith, narina, septo, lábios, sobrancelha…) e vê os piercings de cada região com a joia aplicada no modelo.
-- **Área Íntima (+18)** — protegida por confirmação de idade e **somente com opções escritas** (sem 3D): mamilos, íntimo feminino e íntimo masculino, com as regras de atendimento (maioridade, avaliação anatômica, sala reservada).
-
-Cada piercing mostra descrição, cicatrização, nível de desconforto, joia indicada e preço de referência. Os escolhidos formam um "Meu projeto" que é enviado pronto pelo WhatsApp.
+- **Topo** com os preços mais procurados e botão de WhatsApp.
+- **Escolha seu piercing**: boneco 3D simples (sem reflexos, leve para celulares). O cliente gira o boneco, toca num ponto e vê a lista com preço "a partir de" e o botão **Quero**, que abre o WhatsApp com a mensagem pronta.
+- **Íntimo (+18)**: aba protegida por confirmação de idade, apenas com a lista escrita e os preços.
+- Trabalhos (fotos), cuidados depois de furar, dúvidas e onde estamos.
 
 Site 100% estático (HTML + CSS + JS, three.js incluído em `vendor/`). Não precisa de build.
 
@@ -22,30 +22,30 @@ python3 -m http.server 8000
 
 | O quê | Onde |
 |---|---|
-| WhatsApp, Instagram, endereço, horários | `js/data.js` → `CONFIG` |
+| WhatsApp, Instagram, endereço, horário | `js/data.js` → `CONFIG` |
 | Piercings de cada região, preços, cicatrização, joias | `js/data.js` → `ZONES` (abas em `REGIONS`) |
-| Metais do seletor | `js/data.js` → `METALS` |
-| Fotos do portfólio | `js/data.js` → `GALLERY` (preencha `img` com o caminho da foto, ex.: `assets/portfolio/helix-01.jpg`) |
-| Textos (sobre, FAQ, cuidados) | `index.html` |
+| Cartão "Mais procurados" | `js/data.js` → `POPULAR` |
+| Fotos dos trabalhos | `js/data.js` → `GALLERY` (preencha `img` com o caminho da foto, ex.: `assets/trabalhos/foto-01.jpg`) |
+| Textos (cuidados, dúvidas) | `index.html` |
 | Cores e tipografia | `css/style.css` (variáveis em `:root`) |
 
-## Publicar no GitHub Pages
+## Publicação
 
-Settings → Pages → *Deploy from a branch* → escolha a branch e a pasta `/ (root)`.
+O site está no Vercel (projeto `caliani`, ligado a este repositório): cada envio para a branch de produção atualiza o site.
 
 ## Estrutura
 
 ```
 index.html          página
 css/style.css       estilos
-js/main.js          interface (estúdio, projeto, portfólio, formulário)
-js/studio3d.js      cena 3D: cabeça realista, pontos e joias
+js/main.js          interface (abas, lista de preços, boneco, galeria)
+js/studio3d.js      boneco 3D simples, pontos e joias
 js/data.js          conteúdo editável
 vendor/three/       three.js r160 (licença MIT)
-assets/models/head  modelo 3D da cabeça + texturas
+assets/models/head  modelo 3D da cabeça
 assets/             favicon e imagens
 ```
 
 ## Créditos
 
-Modelo 3D da cabeça: “Lee Perry-Smith” por [Infinite-Realities](https://www.ir-ltd.net), licença [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) (crédito mantido no rodapé do site, como exige a licença).
+Boneco 3D baseado no modelo “Lee Perry-Smith” por [Infinite-Realities](https://www.ir-ltd.net), licença [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) (crédito mantido no rodapé do site, como exige a licença).

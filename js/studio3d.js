@@ -1,14 +1,24 @@
 /* =========================================================================
-   Estúdio 3D — cabeça realista (scan), pontos clicáveis e joias
-   aplicadas na superfície.
+   Boneco 3D simples (sombreado chapado, sem reflexos), pontos clicáveis
+   e joias aplicadas na superfície. Leve para celulares simples.
    ========================================================================= */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const HEAD_DIR = 'assets/models/head/';
 const V3 = THREE.Vector3;
+
+// degradê de 3 tons para o sombreado "desenho"
+function toonGradient() {
+  const data = new Uint8Array([118, 118, 118, 255, 196, 196, 196, 255, 255, 255, 255, 255]);
+  const t = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
+  t.minFilter = t.magFilter = THREE.NearestFilter;
+  t.needsUpdate = true;
+  return t;
+}
+const TOON = toonGradient();
+const toon = (color, extra = {}) => new THREE.MeshToonMaterial({ color, gradientMap: TOON, ...extra });
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -26,23 +36,17 @@ function radialTexture(inner, outer) {
   return t;
 }
 
-/* pedestal escuro com filete dourado + sombra de contato */
-function buildPlinth(topY, rx, rz, h = 0.24) {
+/* base simples clara + sombra suave */
+function buildPlinth(topY, rx, rz, h = 0.2) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0x1a1520, roughness: 0.75, metalness: 0.0, envMapIntensity: 0.15 });
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.04, h, 96), mat);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, h, 64), toon(0xe7ddf0));
   base.scale.set(rx, 1, rz);
   base.position.y = topY - h / 2;
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.002, 0.004, 12, 160),
-    new THREE.MeshStandardMaterial({ color: 0xd8b26e, metalness: 1, roughness: 0.25 }));
-  ring.rotation.x = Math.PI / 2;
-  ring.scale.set(rx, rz, 1);
-  ring.position.y = topY - 0.01;
-  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(rx * 3.6, rz * 3.6),
-    new THREE.MeshBasicMaterial({ map: radialTexture('rgba(0,0,0,0.6)', 'rgba(0,0,0,0)'), transparent: true, depthWrite: false }));
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(rx * 3.2, rz * 3.2),
+    new THREE.MeshBasicMaterial({ map: radialTexture('rgba(60,30,90,0.22)', 'rgba(60,30,90,0)'), transparent: true, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = topY - h - 0.005;
-  g.add(base, ring, shadow);
+  g.add(base, shadow);
   return g;
 }
 
@@ -55,8 +59,8 @@ function buildJewel(spec, metalMat, gemMat) {
       const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.026 * s, 0.018 * s, 0.022 * s, 24), metalMat);
       cup.rotation.x = Math.PI / 2;
       cup.position.z = 0.008 * s;
-      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.023 * s, 1), gemMat);
-      gem.scale.z = 0.7;
+      const gem = new THREE.Mesh(new THREE.SphereGeometry(0.02 * s, 16, 12), gemMat);
+      gem.scale.z = 0.75;
       gem.position.z = 0.022 * s;
       g.add(cup, gem);
       break;
@@ -137,16 +141,13 @@ export class StudioViewer {
 
     const w = container.clientWidth, h = container.clientHeight;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(w, h);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
     this.renderer = renderer;
 
     const scene = new THREE.Scene();
-    scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene = scene;
 
     this.camera = new THREE.PerspectiveCamera(30, w / h, 0.1, 80);
@@ -167,25 +168,16 @@ export class StudioViewer {
     });
     this.controls = controls;
 
-    scene.add(new THREE.HemisphereLight(0xfff4ea, 0x2a1f33, 0.5));
-    const key = new THREE.DirectionalLight(0xfff0e2, 2.4);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xd9cfe3, 1.6));
+    const key = new THREE.DirectionalLight(0xffffff, 1.6);
     key.position.set(3, 4, 6);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffe7da, 0.6);
-    fill.position.set(-5, 1, 4);
-    scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xc9b6ff, 2.2);
-    rim.position.set(-4, 3, -5);
-    scene.add(rim);
-    const rim2 = new THREE.DirectionalLight(0xffd9b0, 1.1);
-    rim2.position.set(5, 1, -3);
-    scene.add(rim2);
+    const back = new THREE.DirectionalLight(0xffffff, 0.6);
+    back.position.set(-4, 2, -5);
+    scene.add(back);
 
-    this.metalMat = new THREE.MeshPhysicalMaterial({ color: 0xb9bcc2, metalness: 1, roughness: 0.22, envMapIntensity: 1.6, clearcoat: 0.3 });
-    this.gemMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff, metalness: 0, roughness: 0, clearcoat: 1,
-      iridescence: 1, iridescenceIOR: 1.8, envMapIntensity: 3, flatShading: true,
-    });
+    this.metalMat = toon(0x5d6675);
+    this.gemMat = toon(0xffffff, { emissive: 0x6c3fd1, emissiveIntensity: 0.25 });
     this.jewelGroup = new THREE.Group();
     scene.add(this.jewelGroup);
     this.raycaster = new THREE.Raycaster();
@@ -201,21 +193,8 @@ export class StudioViewer {
 
   /* ---------------------------- modelos ---------------------------- */
   async loadHead() {
-    const tl = new THREE.TextureLoader();
-    const load = (f) => new Promise((res, rej) => tl.load(HEAD_DIR + f, res, undefined, rej));
-    const [gltf, map, normal, rough] = await Promise.all([
-      new GLTFLoader().loadAsync(HEAD_DIR + 'head.glb'),
-      load('color.jpg'), load('normal.jpg'), load('rough.jpg'),
-    ]);
-    map.colorSpace = THREE.SRGBColorSpace;
-    const aniso = this.renderer.capabilities.getMaxAnisotropy();
-    map.anisotropy = normal.anisotropy = Math.min(8, aniso);
-    const skin = new THREE.MeshPhysicalMaterial({
-      map, normalMap: normal, normalScale: new THREE.Vector2(0.9, 0.9),
-      roughnessMap: rough, roughness: 1, metalness: 0,
-      sheen: 0.35, sheenRoughness: 0.55, sheenColor: new THREE.Color(0xff9e8a),
-      clearcoat: 0.06, clearcoatRoughness: 0.6, envMapIntensity: 0.6,
-    });
+    const gltf = await new GLTFLoader().loadAsync(HEAD_DIR + 'head.glb');
+    const skin = toon(0xf3cfb3);
     const mesh = gltf.scene.getObjectByProperty('type', 'Mesh');
     mesh.material = skin;
     mesh.geometry.computeBoundingBox();
@@ -227,11 +206,11 @@ export class StudioViewer {
     const group = new THREE.Group();
     group.add(root);
     const bottom = mesh.geometry.boundingBox.min.y * 0.5 - 0.75;
-    group.add(buildPlinth(bottom + 0.005, 2.35, 1.5, 0.26));
+    group.add(buildPlinth(bottom + 0.005, 2.3, 1.45));
     this.scene.add(group);
     this.models.face = {
       group, root, pickables: [mesh],
-      home: { pos: new V3(3.9, 0.7, 8.4), target: new V3(0, -0.5, 0) },
+      home: { pos: new V3(2.7, 0.75, 6.2), target: new V3(0, -0.15, 0) },
     };
   }
 
@@ -343,8 +322,6 @@ export class StudioViewer {
   /* ---------------------------- joias ---------------------------- */
   setMetal(metal) {
     this.metalMat.color.setHex(metal.color);
-    this.metalMat.roughness = metal.rough;
-    this.metalMat.metalness = metal.id === 'preto' ? 0.7 : 1;
   }
 
   showJewelry(specs) {
@@ -424,7 +401,6 @@ export class StudioViewer {
       const k = t < 1 ? 1 + 0.25 * Math.sin(t * Math.PI) : 1;
       j.scale.setScalar(Math.max(0.001, ease(t) * k));
     }
-    this.gemMat.iridescenceThicknessRange = [100 + 300 * (0.5 + 0.5 * Math.sin(now / 700)), 800];
     this.renderer.render(this.scene, this.camera);
     this.updateHotspots();
   }

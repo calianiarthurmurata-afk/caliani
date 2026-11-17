@@ -5,7 +5,7 @@
    - CONFIG: contato, endereço, redes sociais
    - REGIONS / ZONES: regiões do boneco 3D (rosto e área íntima), pontos
             clicáveis e os piercings de cada uma (preço, cicatrização, joia...)
-   - METALS: materiais exibidos no seletor de joias
+   - POPULAR: piercings do cartão "Mais procurados"
    - GALLERY: trabalhos do portfólio (troque por fotos reais em /assets)
    ========================================================================= */
 
@@ -16,24 +16,16 @@ export const CONFIG = {
   instagram: 'lorenaluapiercings',      // sem o @
   address: 'Rua Exemplo, 123 — Centro',
   city: 'Sua cidade — UF',
-  hours: [
-    ['Terça a sexta', '10h às 19h'],
-    ['Sábado', '10h às 16h'],
-    ['Domingo e segunda', 'Fechado'],
-  ],
+  hours: 'Segunda a sábado, das 9h às 18h',
   email: 'contato@lorenaluapiercings.com.br',
 };
 
-export const METALS = [
-  { id: 'titanio', name: 'Titânio F136', short: 'Titânio', color: 0xb9bcc2, rough: 0.22, hex: '#b9bcc2' },
-  { id: 'ouro', name: 'Ouro 18k', short: 'Ouro', color: 0xe3b25a, rough: 0.16, hex: '#e3b25a' },
-  { id: 'rose', name: 'Ouro Rosé 18k', short: 'Rosé', color: 0xe2a08a, rough: 0.16, hex: '#e2a08a' },
-  { id: 'preto', name: 'Titânio Black', short: 'Black', color: 0x2b2b30, rough: 0.28, hex: '#2b2b30' },
-];
+/* Aparecem no cartão "Mais procurados" do topo do site (ids de ZONES). */
+export const POPULAR = ['lobulo-1', 'nostril', 'helix-1', 'septo-1', 'tragus-1'];
 
 /* -------------------------------------------------------------------------
    Estúdio 3D
-   - REGIONS: abas do painel. mode 'face' = cabeça 3D realista;
+   - REGIONS: abas do painel. mode 'face' = boneco 3D;
               mode 'intimo' = área íntima (+18), apenas opções escritas
               (as zonas íntimas não usam anchor/view/render).
    - ZONES:   pontos clicáveis do boneco e os piercings de cada um.
@@ -46,8 +38,8 @@ export const METALS = [
 export const REGIONS = [
   { id: 'orelha', mode: 'face', name: 'Orelha', icon: 'ear' },
   { id: 'nariz', mode: 'face', name: 'Nariz', icon: 'nose' },
-  { id: 'boca', mode: 'face', name: 'Boca & Lábios', icon: 'lips' },
-  { id: 'rosto', mode: 'face', name: 'Sobrancelha & Rosto', icon: 'brow' },
+  { id: 'boca', mode: 'face', name: 'Boca', icon: 'lips' },
+  { id: 'rosto', mode: 'face', name: 'Rosto', icon: 'brow' },
   { id: 'mamilos', mode: 'intimo', name: 'Mamilos', icon: 'chest' },
   { id: 'feminino', mode: 'intimo', name: 'Íntimo Feminino', icon: 'fem' },
   { id: 'masculino', mode: 'intimo', name: 'Íntimo Masculino', icon: 'masc' },
@@ -440,13 +432,13 @@ export const ZONES = [
 ];
 
 export const GALLERY = [
-  // Troque `img` por fotos reais (ex.: 'assets/portfolio/helix-01.jpg').
-  { cat: 'orelha', title: 'Curadoria Constelação', detail: 'Lóbulo triplo + hélix duplo + forward', img: '', art: 'ear-constellation' },
-  { cat: 'nariz', title: 'Nostril Ponto de Luz', detail: 'Titânio F136 com zircônia 2mm', img: '', art: 'nose-stud' },
-  { cat: 'orelha', title: 'Daith Cravejado', detail: 'Clicker em ouro 18k', img: '', art: 'ear-daith' },
-  { cat: 'boca', title: 'Medusa Delicado', detail: 'Labret com cristal', img: '', art: 'lips-medusa' },
-  { cat: 'nariz', title: 'Septo Clicker', detail: 'Ouro rosé 18k', img: '', art: 'nose-septum' },
-  { cat: 'orelha', title: 'Industrial Gráfico', detail: 'Barbell titânio black', img: '', art: 'ear-industrial' },
-  { cat: 'rosto', title: 'Sobrancelha Curva', detail: 'Barbell curvo titânio', img: '', art: 'brow' },
-  { cat: 'orelha', title: 'Conch Orbital', detail: 'Argola de segmento 10mm', img: '', art: 'ear-conch' },
+  // Troque `img` por fotos reais (ex.: 'assets/trabalhos/foto-01.jpg').
+  { title: 'Orelha completa', img: '', art: 'ear-constellation' },
+  { title: 'Nostril', img: '', art: 'nose-stud' },
+  { title: 'Daith', img: '', art: 'ear-daith' },
+  { title: 'Medusa', img: '', art: 'lips-medusa' },
+  { title: 'Septo', img: '', art: 'nose-septum' },
+  { title: 'Industrial', img: '', art: 'ear-industrial' },
+  { title: 'Sobrancelha', img: '', art: 'brow' },
+  { title: 'Concha', img: '', art: 'ear-conch' },
 ];
